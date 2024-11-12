@@ -7,6 +7,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.BoxLayout;
@@ -18,11 +19,16 @@ import javax.swing.JTextField;
 
 import com.example.websocket_demo.Message;
 
-public class ClientGUI extends JFrame{
+public class ClientGUI extends JFrame implements MessageListener{
 	private JPanel connectedUsersPanel, messagePanel;
+	private MyStompClient myStompClient;
+	private String username;
 	
-	public ClientGUI(String username) {
+	public ClientGUI(String username) throws InterruptedException, ExecutionException {
 		super("User: " + username);
+		this.username = username;
+		myStompClient = new MyStompClient(this, username);
+		
 		setSize(1218, 685);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -34,6 +40,7 @@ public class ClientGUI extends JFrame{
 						"Exit", JOptionPane.YES_NO_OPTION);
 				
 				if(option == 	JOptionPane.YES_OPTION) {
+					myStompClient.disconnectUser(username);
 					ClientGUI.this.dispose();
 				}
 			}
@@ -90,15 +97,14 @@ public class ClientGUI extends JFrame{
 					if(input.isEmpty()) return;
 					
 					inputField.setText("");
-					
-					messagePanel.add(createChatMessageComponent(new Message("TapTap", input)));
-					repaint();
-					revalidate();
+		
+					myStompClient.sendMessage(new Message(username,input));
 				}
 			}
 		});
 		inputField.setBackground(Utilities.SECONDARY_COLOR);
 		inputField.setForeground(Utilities.TEXT_COLOR);
+		inputField.setBorder(Utilities.addPadding(0, 10, 0, 10));
 		inputField.setFont(new Font("Inter", Font.PLAIN, 16));
 		inputField.setPreferredSize(new Dimension(inputPanel.getWidth(), 50));
 		inputPanel.add(inputField, BorderLayout.CENTER);
@@ -124,6 +130,18 @@ public class ClientGUI extends JFrame{
 		chatMessage.add(messageLabel);
 		
 		return chatMessage;
+	}
+
+	@Override
+	public void onMessageReceive(Message message) {
+		System.out.println("On message receive!");
+		
+	}
+
+	@Override
+	public void onActiveUsersUpdated(ArrayList<String> users) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

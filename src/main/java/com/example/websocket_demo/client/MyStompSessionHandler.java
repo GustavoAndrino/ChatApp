@@ -12,9 +12,11 @@ import com.example.websocket_demo.Message;
 public class MyStompSessionHandler extends StompSessionHandlerAdapter {
 	
 	private String username;
+	private MessageListener messageListener;
 	
-	public MyStompSessionHandler(String username) {
+	public MyStompSessionHandler(MessageListener messageListener, String username) {
 		this.username = username;
+		this.messageListener = messageListener;
 	}
 
 	@Override
@@ -34,6 +36,7 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
 				try {
 					if(payload instanceof Message) {
 						Message message = (Message) payload;
+						messageListener.onMessageReceive(message);
 						System.out.println("Received message: " + message.getUser() + ": " + message.getMessage());
 					}
 					

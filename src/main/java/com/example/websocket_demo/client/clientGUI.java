@@ -108,7 +108,7 @@ public class ClientGUI extends JFrame implements MessageListener{
 		inputField.setFont(new Font("Inter", Font.PLAIN, 16));
 		inputField.setPreferredSize(new Dimension(inputPanel.getWidth(), 50));
 		inputPanel.add(inputField, BorderLayout.CENTER);
-		chatPanel.add(inputField, BorderLayout.SOUTH);
+		chatPanel.add(inputPanel, BorderLayout.SOUTH);
 		
 		add(chatPanel, BorderLayout.CENTER);
 	}
@@ -134,14 +134,31 @@ public class ClientGUI extends JFrame implements MessageListener{
 
 	@Override
 	public void onMessageReceive(Message message) {
-		System.out.println("On message receive!");
+		messagePanel.add(createChatMessageComponent(message));
 		
 	}
 
 	@Override
 	public void onActiveUsersUpdated(ArrayList<String> users) {
-		// TODO Auto-generated method stub
+		if(connectedUsersPanel.getComponents().length >= 2) {
+			connectedUsersPanel.remove(1);
+		}
 		
+		JPanel userListPanel = new JPanel();
+		userListPanel.setBackground(Utilities.TRANSPARENT_COLOR);
+		userListPanel.setLayout(new BoxLayout(userListPanel, BoxLayout.Y_AXIS));
+		
+		for(String user : users) {
+			JLabel username = new JLabel();
+			username.setText(user);
+			username.setForeground(Utilities.TEXT_COLOR);
+			username.setFont(new Font("Inter", Font.BOLD, 16));
+			userListPanel.add(username);
+		}
+		
+		connectedUsersPanel.add(userListPanel);
+		revalidate();
+		repaint();
 	}
 	
 }

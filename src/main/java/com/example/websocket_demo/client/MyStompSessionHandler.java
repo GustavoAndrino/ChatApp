@@ -1,6 +1,7 @@
 package com.example.websocket_demo.client;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
@@ -46,6 +47,32 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
 			}
 		});
 		System.out.println("Client subscribed to /topic/messages");
+		
+		session.subscribe("/topic/users", new StompFrameHandler() {
+			
+			@Override
+			public Type getPayloadType(StompHeaders headers) {
+				return new ArrayList<String>().getClass() ;
+			}
+			
+			@Override
+			public void handleFrame(StompHeaders headers, Object payload) {
+				try {
+					if(payload instanceof ArrayList) {
+						ArrayList<String> activeUsers = (ArrayList<String>) payload;
+						messageListener.onActiveUsersUpdated(activeUsers);
+						System.out.println("Received active users" + activeUsers);
+					}
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
+				
+			}
+			
+		});
+		System.out.println("Subscribed to /topic/users");
+		
+		session.send("/app/request-users", "");
 		
 	}
 	

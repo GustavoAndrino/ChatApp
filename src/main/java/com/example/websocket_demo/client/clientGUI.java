@@ -1,8 +1,12 @@
 package com.example.websocket_demo.client;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.ScrollPane;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -15,7 +19,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.example.websocket_demo.Message;
 
@@ -23,6 +30,7 @@ public class ClientGUI extends JFrame implements MessageListener{
 	private JPanel connectedUsersPanel, messagePanel;
 	private MyStompClient myStompClient;
 	private String username;
+	private JScrollPane messagePanelScrollPane;
 	
 	public ClientGUI(String username) throws InterruptedException, ExecutionException {
 		super("User: " + username);
@@ -46,10 +54,16 @@ public class ClientGUI extends JFrame implements MessageListener{
 			}
 		});
 		
-		getContentPane()
-.setBackground(Utilities.PRIMARY_COLOR);	
-		addGuiComponents();
+		addComponentListener(new ComponentAdapter() {
+		@Override
+		public void componentResized(ComponentEvent e) {
+				updateMessageSize();
+				//TODO
+			}
+		});
 		
+		getContentPane().setBackground(Utilities.PRIMARY_COLOR);	
+		addGuiComponents();	
 }
 	
 	private void addGuiComponents() {
@@ -80,7 +94,20 @@ public class ClientGUI extends JFrame implements MessageListener{
 		messagePanel = new JPanel();
 		messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
 		messagePanel.setBackground(Utilities.TRANSPARENT_COLOR);
-		chatPanel.add(messagePanel, BorderLayout.CENTER);
+		
+		messagePanelScrollPane = new JScrollPane(messagePanel);
+		messagePanelScrollPane.setBackground(Utilities.TRANSPARENT_COLOR);
+		messagePanelScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		messagePanelScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		messagePanelScrollPane.getViewport().addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				revalidate();
+				repaint();
+			}
+		});
+		
+		chatPanel.add(messagePanelScrollPane, BorderLayout.CENTER);
 		
 		JPanel inputPanel = new JPanel();
 		inputPanel.setBorder(Utilities.addPadding(10, 10, 10, 10));
@@ -124,7 +151,12 @@ public class ClientGUI extends JFrame implements MessageListener{
 		usernameLabel.setFont(new Font("Inter", Font.BOLD, 18));
 		chatMessage.add(usernameLabel);
 		
-		JLabel messageLabel = new JLabel(message.getMessage());
+		JLabel messageLabel = new JLabel();
+		messageLabel.setText("<html>" +
+                "<body style='width:" + (0.60 * getWidth()) + "'px>" +
+                    message.getMessage() +
+                "</body>"+
+        "</html>");
 		messageLabel.setForeground(Utilities.TEXT_COLOR);
 		messageLabel.setFont(new Font("Inter", Font.PLAIN, 18));
 		chatMessage.add(messageLabel);
@@ -135,7 +167,10 @@ public class ClientGUI extends JFrame implements MessageListener{
 	@Override
 	public void onMessageReceive(Message message) {
 		messagePanel.add(createChatMessageComponent(message));
+		revalidate();
+		repaint();
 		
+		messagePanelScrollPane.getVerticalScrollBar().setValue(Integer.MAX_VALUE);
 	}
 
 	@Override
@@ -159,6 +194,23 @@ public class ClientGUI extends JFrame implements MessageListener{
 		connectedUsersPanel.add(userListPanel);
 		revalidate();
 		repaint();
+	}
+	
+	private void updateMessageSize() {
+		for(int i = 0; i < messagePanel.getComponents().length; i++) {
+			Component component = messagePanel.getComponent(i);
+			if(component instanceof JPanel) {
+				JPanel chatMessage = (JPanel) component;
+				if(chatMessage.getComponent(1) instanceof JLabel) {
+					JLabel messageLabel = (JLabel) chatMessage.getComponent(1);
+					messageLabel.setText("<html>" +
+							"<body style='width:" + (0.60 * getWidth()) + "'px>" +
+								messageLabel.getText() +
+							"</body>"+
+						"</html>");
+				}
+			}
+		}
 	}
 	
 }
